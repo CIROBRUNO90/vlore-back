@@ -11,6 +11,9 @@ mkdir -p /var/log/supervisor
 mkdir -p /var/log/django
 mkdir -p /var/log/gunicorn
 
+echo "Collect static files..."
+python manage.py collectstatic --noinput
+
 echo "Applying migrations..."
 python manage.py makemigrations
 python manage.py migrate
