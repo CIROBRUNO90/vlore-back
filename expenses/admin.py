@@ -40,7 +40,8 @@ class ExpensesAdmin(admin.ModelAdmin):
 
     def expense_type_display(self, obj):
         """
-        Mejora la visualización del tipo de gasto con un código de colores
+        Mejora la visualización del tipo de gasto con un código de colores,
+        ajustando automáticamente el color del texto para máxima legibilidad.
         """
         colors = {
             'MKT': '#FF9999',  # Rojo claro para Marketing
@@ -54,21 +55,48 @@ class ExpensesAdmin(admin.ModelAdmin):
             'OTH': '#E6E6E6'   # Gris claro para Otros
         }
 
+        def get_text_color(bg_color):
+            """
+            Determina si el texto debe ser negro o blanco basado en el color de fondo.
+            Utiliza la fórmula de luminosidad relativa (percepción humana de brillo).
+            """
+            # Convierte el color hexadecimal a RGB
+            bg_color = bg_color.lstrip('#')
+            r = int(bg_color[0:2], 16)
+            g = int(bg_color[2:4], 16)
+            b = int(bg_color[4:6], 16)
+
+            # Calcula la luminosidad usando la fórmula de luminosidad relativa
+            # Los coeficientes representan cómo el ojo humano percibe cada color
+            luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+
+            # Si la luminosidad es mayor a 0.5, el fondo es claro y necesitamos texto oscuro
+            return '#000000' if luminance > 0.5 else '#FFFFFF'
+
+        bg_color = colors.get(obj.expense_type, '#E6E6E6')
+        text_color = get_text_color(bg_color)
+
         return format_html(
-            '<span style="background-color: {}; padding: 3px 10px; border-radius: 3px;">{}</span>',
-            colors.get(obj.expense_type, '#E6E6E6'),
+            '<div class="expense-type-container">'
+            '<span style="background-color: {}; color: {}; padding: 4px 12px; '
+            'border-radius: 4px; display: inline-block; min-width: 100px; '
+            'text-align: center; font-weight: 500;">{}</span>'
+            '</div>',
+            bg_color,
+            text_color,
             obj.get_expense_type_display()
         )
     expense_type_display.short_description = 'Tipo de Gasto'
 
     def amount_display(self, obj):
         """
-        Formatea el monto con color según su valor
+        Formatea el monto con color según su valor y alineación correcta
         """
+        formatted_amount = "${:,.2f}".format(float(obj.amount))
         return format_html(
-            '<span style="color: {};">${:,.2f}</span>',
+            '<div class="amount-cell" style="color:{};">{}</div>',
             'red' if obj.amount > 1000 else 'green',
-            obj.amount
+            formatted_amount
         )
     amount_display.short_description = 'Monto'
 
