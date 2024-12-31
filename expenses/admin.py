@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.db.models import Sum
 from django.utils.html import format_html
+from django.template.response import TemplateResponse
+from django.db.models.functions import TruncMonth
 
 from .models import Expenses
 
@@ -95,7 +97,7 @@ class ExpensesAdmin(admin.ModelAdmin):
         formatted_amount = "${:,.2f}".format(float(obj.amount))
         return format_html(
             '<div class="amount-cell" style="color:{};">{}</div>',
-            'red' if obj.amount > 1000 else 'green',
+            'red' if obj.amount > 700000 else 'green',
             formatted_amount
         )
     amount_display.short_description = 'Monto'
@@ -104,15 +106,28 @@ class ExpensesAdmin(admin.ModelAdmin):
         """
         Añade estadísticas al pie de la lista de gastos
         """
-        response = super().changelist_view(request, extra_context)
+        response = super().changelist_view(request, extra_context=extra_context)
 
-        # Solo modificamos la respuesta si no es un popup
-        if hasattr(response, 'context_data') and not request.GET.get('_popup'):
-            queryset = self.get_queryset(request)
-            total_amount = queryset.aggregate(total=Sum('amount'))['total'] or 0
+        # Verificamos que sea una TemplateResponse
+        if isinstance(response, TemplateResponse):
+            # Obtenemos el queryset filtrado
+            queryset = response.context_data['cl'].queryset
 
-            # Agregamos el total al contexto
-            response.context_data['total_amount'] = total_amount
+            # Calculamos los totales
+            totales = {
+                'total': queryset.aggregate(total=Sum('amount'))['total'] or 0,
+                'por_mes': queryset.annotate(
+                    mes=TruncMonth('date')
+                ).values('mes').annotate(
+                    total=Sum('amount')
+                ).order_by('-mes')[:3],
+                'por_categoria': queryset.values('expense_type').annotate(
+                    total=Sum('amount')
+                ).order_by('-total')
+            }
+
+            # Agregamos los totales al contexto
+            response.context_data['totales'] = totales
 
         return response
 
