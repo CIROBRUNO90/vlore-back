@@ -1,3 +1,5 @@
+import logging
+
 from django.contrib import admin
 from django.db.models import Sum
 from django.utils.html import format_html
@@ -6,14 +8,15 @@ from django.db.models.functions import TruncMonth
 
 from .models import Expenses
 
+logger = logging.getLogger(__name__)
+
 
 @admin.register(Expenses)
 class ExpensesAdmin(admin.ModelAdmin):
-    # Configuramos qué campos se muestran en la lista principal
     list_display = [
         'date',
-        'expense_type_display',  # Método personalizado para mostrar el tipo
-        'amount_display',        # Método personalizado para el monto
+        'expense_type_display',
+        'amount_display',
         'observations'
     ]
 
@@ -33,7 +36,7 @@ class ExpensesAdmin(admin.ModelAdmin):
         }),
         ('Detalles Adicionales', {
             'fields': ('observations',),
-            'classes': ('collapse',)  # Hace esta sección colapsable
+            'classes': ('collapse',)
         })
     )
 
@@ -62,7 +65,6 @@ class ExpensesAdmin(admin.ModelAdmin):
             Determina si el texto debe ser negro o blanco basado en el color de fondo.
             Utiliza la fórmula de luminosidad relativa (percepción humana de brillo).
             """
-            # Convierte el color hexadecimal a RGB
             bg_color = bg_color.lstrip('#')
             r = int(bg_color[0:2], 16)
             g = int(bg_color[2:4], 16)
@@ -108,26 +110,37 @@ class ExpensesAdmin(admin.ModelAdmin):
         """
         response = super().changelist_view(request, extra_context=extra_context)
 
-        # Verificamos que sea una TemplateResponse
         if isinstance(response, TemplateResponse):
-            # Obtenemos el queryset filtrado
-            queryset = response.context_data['cl'].queryset
+            try:
+                if 'cl' in response.context_data:
+                    queryset = response.context_data['cl'].queryset
+                else:
+                    queryset = self.model.objects.all()
 
-            # Calculamos los totales
-            totales = {
-                'total': queryset.aggregate(total=Sum('amount'))['total'] or 0,
-                'por_mes': queryset.annotate(
-                    mes=TruncMonth('date')
-                ).values('mes').annotate(
-                    total=Sum('amount')
-                ).order_by('-mes')[:3],
-                'por_categoria': queryset.values('expense_type').annotate(
-                    total=Sum('amount')
-                ).order_by('-total')
-            }
+                if hasattr(response.context_data.get('cl', None), 'get_queryset'):
+                    queryset = response.context_data['cl'].get_queryset(request)
 
-            # Agregamos los totales al contexto
-            response.context_data['totales'] = totales
+                totales = {
+                    'total': queryset.aggregate(total=Sum('amount'))['total'] or 0,
+                    'por_mes': queryset.annotate(
+                        mes=TruncMonth('date')
+                    ).values('mes').annotate(
+                        total=Sum('amount')
+                    ).order_by('-mes')[:3],
+                    'por_categoria': queryset.values('expense_type').annotate(
+                        total=Sum('amount')
+                    ).order_by('-total')
+                }
+
+                response.context_data['totales'] = totales
+
+            except Exception as e:
+                logger.error(f"Error en changelist_view: {str(e)}")
+                response.context_data['totales'] = {
+                    'total': 0,
+                    'por_mes': [],
+                    'por_categoria': []
+                }
 
         return response
 

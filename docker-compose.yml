@@ -5,7 +5,7 @@ services:
     volumes:
       - .:/app
     ports:
-      - "80:9009"
+      - "9009:9009"
     networks :
       - vlore
     # depends_on:
