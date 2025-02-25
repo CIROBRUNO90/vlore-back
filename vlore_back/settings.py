@@ -147,3 +147,11 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+TIENDANUBE_STORE_ID = 'tu_store_id'  # Reemplazar con tu ID de tienda
+TIENDANUBE_ACCESS_TOKEN = 'tu_access_token'  # Reemplazar con tu token de acceso
+
+# Configuraciones adicionales para la integración
+TIENDANUBE_SYNC_INTERVAL = 30  # Intervalo en minutos para sincronización automática
+TIENDANUBE_WEBHOOKS_ENABLED = True  # Habilitar webhooks para actualizaciones en tiempo real
