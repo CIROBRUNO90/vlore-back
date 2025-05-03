@@ -32,6 +32,11 @@ SECRET_KEY = 'django-insecure-ua#grgn2lcdor0m!=fffqm%l*ve$1ga*tpuxt&*qi@k^z39c$+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = str(env("DEBUG", False)).lower() in ["true"]
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://vlore-back-production.up.railway.app',
+    'http://vlore-back-production.up.railway.app',
+]
+
 ALLOWED_HOSTS = ['*']
 
 
@@ -88,13 +93,6 @@ WSGI_APPLICATION = 'vlore_back.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-print("DATABASE")
-print(str(env("DB_NAME")))
-print(str(env("DB_USER")))
-print(str(env("DB_PASSWORD")))
-print(str(env("DB_HOST")))
-print(str(env("DB_PORT")))
-print("DATABASE")
 
 DB_NAME = os.environ.get('DB_NAME', '')
 DB_USER = os.environ.get('DB_USER', '')
@@ -103,7 +101,6 @@ DB_HOST = os.environ.get('DB_HOST', '')
 DB_PORT = os.environ.get('DB_PORT', '')
 
 if DB_NAME and DB_USER and DB_PASSWORD and DB_HOST and DB_PORT:
-    print("DATABASE")
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql_psycopg2",
@@ -115,7 +112,6 @@ if DB_NAME and DB_USER and DB_PASSWORD and DB_HOST and DB_PORT:
         },
     }
 else:
-    print("DATABASE 2")
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql_psycopg2",
