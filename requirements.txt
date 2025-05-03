@@ -6,3 +6,4 @@ psycopg2-binary==2.9.9
 python-decouple==3.8
 uWSGI==2.0.28
 pytest-django==4.9.0
+python-dotenv==1.0.0

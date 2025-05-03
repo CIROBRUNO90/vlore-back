@@ -15,6 +15,10 @@ from os import getenv as env
 from pathlib import Path
 from django.utils.translation import gettext_lazy as _
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -91,16 +95,37 @@ print(str(env("DB_PASSWORD")))
 print(str(env("DB_HOST")))
 print(str(env("DB_PORT")))
 print("DATABASE")
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": str(env("DB_NAME")),
-        "USER": str(env("DB_USER")),
-        "PASSWORD": str(env("DB_PASSWORD")),
-        "HOST": str(env("DB_HOST")),
-        "PORT": str(env("DB_PORT")),
-    },
-}
+
+DB_NAME = os.environ.get('DB_NAME', '')
+DB_USER = os.environ.get('DB_USER', '')
+DB_PASSWORD = os.environ.get('DB_PASSWORD', '')
+DB_HOST = os.environ.get('DB_HOST', '')
+DB_PORT = os.environ.get('DB_PORT', '')
+
+if DB_NAME and DB_USER and DB_PASSWORD and DB_HOST and DB_PORT:
+    print("DATABASE")
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql_psycopg2",
+            "NAME": DB_NAME,
+            "USER": DB_USER,
+            "PASSWORD": DB_PASSWORD,
+            "HOST": DB_HOST,
+            "PORT": DB_PORT,
+        },
+    }
+else:
+    print("DATABASE 2")
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql_psycopg2",
+            "NAME": str(env("DB_NAME")),
+            "USER": str(env("DB_USER")),
+            "PASSWORD": str(env("DB_PASSWORD")),
+            "HOST": str(env("DB_HOST")),
+            "PORT": str(env("DB_PORT")),
+        },
+    }
 
 
 # Password validation
