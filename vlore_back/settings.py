@@ -28,7 +28,7 @@ SECRET_KEY = 'django-insecure-ua#grgn2lcdor0m!=fffqm%l*ve$1ga*tpuxt&*qi@k^z39c$+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = str(env("DEBUG", False)).lower() in ["true"]
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -84,7 +84,13 @@ WSGI_APPLICATION = 'vlore_back.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
+print("DATABASE")
+print(str(env("DB_NAME")))
+print(str(env("DB_USER")))
+print(str(env("DB_PASSWORD")))
+print(str(env("DB_HOST")))
+print(str(env("DB_PORT")))
+print("DATABASE")
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
