@@ -58,19 +58,27 @@ class ExpensesAdmin(admin.ModelAdmin):
     def expense_type_display(self, obj):
         """
         Mejora la visualización del tipo de gasto con un código de colores,
-        ajustando automáticamente el color del texto para máxima legibilidad.
+        generando colores dinámicamente basados en el código del tipo de gasto.
         """
-        colors = {
-            'MKT': '#FF9999',  # Rojo claro para Marketing
-            'LOG': '#99FF99',  # Verde claro para Logística
-            'PLT': '#9999FF',  # Azul claro para Plataforma
-            'SUP': '#FFFF99',  # Amarillo claro para Insumos
-            'UTL': '#FF99FF',  # Rosa claro para Servicios
-            'TAX': '#99FFFF',  # Cyan claro para Impuestos
-            'SAL': '#FFB366',  # Naranja claro para Salarios
-            'SHI': '#B366FF',  # Púrpura claro para Envíos
-            'OTH': '#E6E6E6'   # Gris claro para Otros
-        }
+        def generate_color_from_code(code):
+            """
+            Genera un color único basado en el código del tipo de gasto.
+            Usa una función hash simple para generar un color consistente.
+            """
+            # Usamos el código como semilla para generar un color consistente
+            hash_value = sum(ord(c) for c in code)
+
+            # Generamos componentes RGB usando el hash
+            r = (hash_value * 17) % 256
+            g = (hash_value * 31) % 256
+            b = (hash_value * 13) % 256
+
+            # Aseguramos que el color no sea demasiado oscuro
+            r = max(r, 100)
+            g = max(g, 100)
+            b = max(b, 100)
+
+            return f'#{r:02x}{g:02x}{b:02x}'
 
         def get_text_color(bg_color):
             """
@@ -83,13 +91,21 @@ class ExpensesAdmin(admin.ModelAdmin):
             b = int(bg_color[4:6], 16)
 
             # Calcula la luminosidad usando la fórmula de luminosidad relativa
-            # Los coeficientes representan cómo el ojo humano percibe cada color
             luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
 
             # Si la luminosidad es mayor a 0.5, el fondo es claro y necesitamos texto oscuro
             return '#000000' if luminance > 0.5 else '#FFFFFF'
 
-        bg_color = colors.get(obj.expense_type.code, '#E6E6E6')
+        if not obj.expense_type:
+            return format_html(
+                '<div class="expense-type-container">'
+                '<span style="background-color: #E6E6E6; color: #000000; padding: 4px 12px; '
+                'border-radius: 4px; display: inline-block; min-width: 100px; '
+                'text-align: center; font-weight: 500;">Sin tipo</span>'
+                '</div>'
+            )
+
+        bg_color = generate_color_from_code(obj.expense_type.code)
         text_color = get_text_color(bg_color)
 
         return format_html(
