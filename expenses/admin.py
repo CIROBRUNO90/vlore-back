@@ -148,18 +148,38 @@ class ExpensesAdmin(admin.ModelAdmin):
                 if hasattr(response.context_data.get('cl', None), 'get_queryset'):
                     queryset = response.context_data['cl'].get_queryset(request)
 
+                def format_amount(amount):
+                    """
+                    Formatea el monto con separadores de miles y dos decimales
+                    """
+                    return f"${amount:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
                 totales = {
-                    'total': queryset.aggregate(total=Sum('amount'))['total'] or 0,
-                    'por_mes': queryset.annotate(
-                        mes=TruncMonth('date')
-                    ).values('mes').annotate(
-                        total=Sum('amount')
-                    ).order_by('-mes')[:3],
-                    'por_categoria': queryset.values(
-                        'expense_type__name'
-                    ).annotate(
-                        total=Sum('amount')
-                    ).order_by('-total')
+                    'total': format_amount(
+                        queryset.aggregate(total=Sum('amount'))['total'] or 0
+                    ),
+                    'por_mes': [
+                        {
+                            'mes': mes['mes'],
+                            'total': format_amount(mes['total'])
+                        }
+                        for mes in queryset.annotate(
+                            mes=TruncMonth('date')
+                        ).values('mes').annotate(
+                            total=Sum('amount')
+                        ).order_by('-mes')[:3]
+                    ],
+                    'por_categoria': [
+                        {
+                            'nombre': cat['expense_type__name'],
+                            'total': format_amount(cat['total'])
+                        }
+                        for cat in queryset.values(
+                            'expense_type__name'
+                        ).annotate(
+                            total=Sum('amount')
+                        ).order_by('-total')
+                    ]
                 }
 
                 response.context_data['totales'] = totales
@@ -167,7 +187,7 @@ class ExpensesAdmin(admin.ModelAdmin):
             except Exception as e:
                 logger.error(f"Error en changelist_view: {str(e)}")
                 response.context_data['totales'] = {
-                    'total': 0,
+                    'total': format_amount(0),
                     'por_mes': [],
                     'por_categoria': []
                 }
