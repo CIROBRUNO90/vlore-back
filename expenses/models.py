@@ -48,6 +48,12 @@ class Expenses(TimestampsMixin):
         help_text=_('Monto total del gasto')
     )
 
+    is_fixed = models.BooleanField(
+        null=True,
+        verbose_name=_('Gasto fijo'),
+        help_text=_('Indica si el gasto es fijo o variable')
+    )
+
     observations = models.TextField(
         blank=True,
         verbose_name=_('Observaciones'),

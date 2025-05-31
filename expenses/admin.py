@@ -26,12 +26,14 @@ class ExpensesAdmin(admin.ModelAdmin):
         'date',
         'expense_type_display',
         'amount_display',
-        'observations'
+        'observations',
+        'is_fixed'
     ]
 
     list_filter = [
         ('date', DateRangeFilter),
-        'expense_type'
+        'expense_type',
+        'is_fixed'
     ]
 
     search_fields = [
@@ -42,7 +44,7 @@ class ExpensesAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('Información Principal', {
-            'fields': ('date', 'expense_type', 'amount')
+            'fields': ('date', 'expense_type', 'amount', 'is_fixed')
         }),
         ('Detalles Adicionales', {
             'fields': ('observations',),
