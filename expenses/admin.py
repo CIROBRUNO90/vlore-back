@@ -6,9 +6,18 @@ from django.utils.html import format_html
 from django.template.response import TemplateResponse
 from django.db.models.functions import TruncMonth
 
-from .models import Expenses
+from rangefilter.filters import DateRangeFilter
+
+from .models import Expenses, ExpenseType
 
 logger = logging.getLogger(__name__)
+
+
+@admin.register(ExpenseType)
+class ExpenseTypeAdmin(admin.ModelAdmin):
+    list_display = ['code', 'name']
+    search_fields = ['code', 'name']
+    ordering = ['name']
 
 
 @admin.register(Expenses)
@@ -21,13 +30,14 @@ class ExpensesAdmin(admin.ModelAdmin):
     ]
 
     list_filter = [
-        'date',
+        ('date', DateRangeFilter),
         'expense_type'
     ]
 
     search_fields = [
         'observations',
-        'expense_type'
+        'expense_type__name',
+        'expense_type__code'
     ]
 
     fieldsets = (
@@ -77,7 +87,7 @@ class ExpensesAdmin(admin.ModelAdmin):
             # Si la luminosidad es mayor a 0.5, el fondo es claro y necesitamos texto oscuro
             return '#000000' if luminance > 0.5 else '#FFFFFF'
 
-        bg_color = colors.get(obj.expense_type, '#E6E6E6')
+        bg_color = colors.get(obj.expense_type.code, '#E6E6E6')
         text_color = get_text_color(bg_color)
 
         return format_html(
@@ -88,7 +98,7 @@ class ExpensesAdmin(admin.ModelAdmin):
             '</div>',
             bg_color,
             text_color,
-            obj.get_expense_type_display()
+            obj.expense_type.name
         )
     expense_type_display.short_description = 'Tipo de Gasto'
 
@@ -127,7 +137,9 @@ class ExpensesAdmin(admin.ModelAdmin):
                     ).values('mes').annotate(
                         total=Sum('amount')
                     ).order_by('-mes')[:3],
-                    'por_categoria': queryset.values('expense_type').annotate(
+                    'por_categoria': queryset.values(
+                        'expense_type__name'
+                    ).annotate(
                         total=Sum('amount')
                     ).order_by('-total')
                 }

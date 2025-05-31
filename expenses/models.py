@@ -1,23 +1,44 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from .constants import ExpenseTypeChoices
 from vlore_back.models import TimestampsMixin
 
 
-class Expenses(TimestampsMixin):
+class ExpenseType(TimestampsMixin):
+    code = models.CharField(
+        max_length=3,
+        unique=True,
+        verbose_name=_('Código'),
+        help_text=_('Código único para el tipo de gasto')
+    )
 
+    name = models.CharField(
+        max_length=50,
+        verbose_name=_('Nombre'),
+        help_text=_('Nombre del tipo de gasto')
+    )
+
+    class Meta:
+        verbose_name = _('Tipo de Gasto')
+        verbose_name_plural = _('Tipos de Gastos')
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
+class Expenses(TimestampsMixin):
     date = models.DateField(
         verbose_name=_('Fecha del gasto'),
         help_text=_('Fecha en que se realizó el gasto')
     )
 
-    expense_type = models.CharField(
-        max_length=3,
-        choices=ExpenseTypeChoices.choices,
-        default=ExpenseTypeChoices.OTHER,
+    expense_type = models.ForeignKey(
+        ExpenseType,
+        on_delete=models.PROTECT,
         verbose_name=_('Tipo de gasto'),
-        help_text=_('Categoría o tipo de gasto realizado')
+        help_text=_('Categoría o tipo de gasto realizado'),
+        null=True,
     )
 
     amount = models.DecimalField(
@@ -39,4 +60,4 @@ class Expenses(TimestampsMixin):
         ordering = ['-date']
 
     def __str__(self):
-        return f"{self.get_expense_type_display()} - {self.date} - ${self.amount}"
+        return f"{self.expense_type.name} - {self.date} - ${self.amount}"
