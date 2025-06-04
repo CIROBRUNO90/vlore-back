@@ -11,9 +11,13 @@ mkdir -p /var/log/supervisor
 mkdir -p /var/log/django
 mkdir -p /var/log/gunicorn
 
+echo "Collect static files..."
+python manage.py collectstatic --noinput
+
 echo "Applying migrations..."
 python manage.py makemigrations
 python manage.py migrate
 
-echo "Starting supervisord..."
-exec /usr/bin/supervisord -n -c /etc/supervisor/conf.d/supervisord.conf
+python manage.py runserver 0.0.0.0:9009
+# echo "Starting supervisord..."
+# exec /usr/bin/supervisord -n -c /etc/supervisor/conf.d/supervisord.conf

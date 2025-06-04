@@ -9,9 +9,15 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
+import os
 
 from os import getenv as env
 from pathlib import Path
+from django.utils.translation import gettext_lazy as _
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,23 +27,39 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-ua#grgn2lcdor0m!=fffqm%l*ve$1ga*tpuxt&*qi@k^z39c$+'
+SECRET_KEY = str(env("SECRET_KEY"))
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = str(env("DEBUG", False)).lower() in ["true"]
 
-ALLOWED_HOSTS = []
+CSRF_TRUSTED_ORIGINS = [
+    'https://vlore-back-production.up.railway.app',
+    'http://vlore-back-production.up.railway.app',
+    'https://vlore-backoffice.up.railway.app',
+]
+
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    'admin_interface',
+    'colorfield',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # Third-party apps
+    'rest_framework',
+    'rangefilter',
+    # Local apps
+    'expenses',
+    'incomes',
+    'products',
+    'suppliers',
 ]
 
 MIDDLEWARE = [
@@ -48,6 +70,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'vlore_back.urls'
@@ -74,16 +97,36 @@ WSGI_APPLICATION = 'vlore_back.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": str(env("DB_NAME")),
-        "USER": str(env("DB_USER")),
-        "PASSWORD": str(env("DB_PASSWORD")),
-        "HOST": str(env("DB_HOST")),
-        "PORT": str(env("DB_PORT")),
-    },
-}
+DB_NAME = os.environ.get('DB_NAME', '')
+DB_USER = os.environ.get('DB_USER', '')
+DB_PASSWORD = os.environ.get('DB_PASSWORD', '')
+DB_HOST = os.environ.get('DB_HOST', '')
+DB_PORT = os.environ.get('DB_PORT', '')
+
+if DB_NAME and DB_USER and DB_PASSWORD and DB_HOST and DB_PORT:
+    print("Using environment variables for database configuration.")
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql_psycopg2",
+            "NAME": DB_NAME,
+            "USER": DB_USER,
+            "PASSWORD": DB_PASSWORD,
+            "HOST": DB_HOST,
+            "PORT": DB_PORT,
+        },
+    }
+else:
+    print("Using local database configuration.")
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql_psycopg2",
+            "NAME": str(env("DB_NAME")),
+            "USER": str(env("DB_USER")),
+            "PASSWORD": str(env("DB_PASSWORD")),
+            "HOST": str(env("DB_HOST")),
+            "PORT": str(env("DB_PORT")),
+        },
+    }
 
 
 # Password validation
@@ -108,9 +151,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'es'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Argentina/Buenos_Aires'
 
 USE_I18N = True
 
@@ -120,9 +163,26 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Configuración para archivos de medios
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+TIENDANUBE_STORE_ID = 'tu_store_id'  # Reemplazar con tu ID de tienda
+TIENDANUBE_ACCESS_TOKEN = 'tu_access_token'  # Reemplazar con tu token de acceso
+
+# Configuraciones adicionales para la integración
+TIENDANUBE_SYNC_INTERVAL = 30  # Intervalo en minutos para sincronización automática
+TIENDANUBE_WEBHOOKS_ENABLED = True  # Habilitar webhooks para actualizaciones en tiempo real
